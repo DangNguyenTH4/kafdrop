@@ -105,6 +105,14 @@
             </#if>
         </div>
         &nbsp;&nbsp;
+        <div class="form-group ${spring.status.error?string("has-error", "")}">
+            <label class="control-label" for="offset">TextSearch</label>
+            <@spring.formInput path="messageForm.textSearch" attributes='class="form-control" size="10"'/>
+            <#if spring.status.error>
+                <span class="text-danger"><i class="fa fa-times-circle"></i><@spring.showErrors "<br/>"/></span>
+            </#if>
+        </div>
+        &nbsp;&nbsp;
         <@spring.bind path="messageForm.count"/>
         <div class="form-group ${spring.status.error?string("has-error", "")}">
             <label class=control-label" for="count"># messages</label>

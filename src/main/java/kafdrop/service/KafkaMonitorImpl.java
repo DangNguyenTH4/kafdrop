@@ -144,46 +144,94 @@ public final class KafkaMonitorImpl implements KafkaMonitor {
   }
 
   @Override
-  public List<MessageVO> getMessages(String topic, int count,
+  public List<MessageVO> getMessages(String topic, int count, String textSearch,
                                      Deserializers deserializers) {
     final var records = highLevelConsumer.getLatestRecords(topic, count, deserializers);
-    if (records != null) {
-      final var messageVos = new ArrayList<MessageVO>();
-      for (var rec : records) {
-        final var messageVo = new MessageVO();
-        messageVo.setPartition(rec.partition());
-        messageVo.setOffset(rec.offset());
-        messageVo.setKey(rec.key());
-        messageVo.setMessage(rec.value());
-        messageVo.setHeaders(headersToMap(rec.headers()));
-        messageVo.setTimestamp(new Date(rec.timestamp()));
-        messageVos.add(messageVo);
+
+    if (textSearch != null && !textSearch.isEmpty()) {
+      if (records != null) {
+        final var messageVos = new ArrayList<MessageVO>();
+        for (var rec : records) {
+          if (!textSearch.equals(rec.key()) || !textSearch.equals(rec.value())) {
+            continue;
+          }
+          final var messageVo = new MessageVO();
+          messageVo.setPartition(rec.partition());
+          messageVo.setOffset(rec.offset());
+          messageVo.setKey(rec.key());
+          messageVo.setMessage(rec.value());
+          messageVo.setHeaders(headersToMap(rec.headers()));
+          messageVo.setTimestamp(new Date(rec.timestamp()));
+          messageVos.add(messageVo);
+        }
+        return messageVos;
+      } else {
+        return Collections.emptyList();
       }
-      return messageVos;
     } else {
-      return Collections.emptyList();
+      if (records != null) {
+        final var messageVos = new ArrayList<MessageVO>();
+        for (var rec : records) {
+          final var messageVo = new MessageVO();
+          messageVo.setPartition(rec.partition());
+          messageVo.setOffset(rec.offset());
+          messageVo.setKey(rec.key());
+          messageVo.setMessage(rec.value());
+          messageVo.setHeaders(headersToMap(rec.headers()));
+          messageVo.setTimestamp(new Date(rec.timestamp()));
+          messageVos.add(messageVo);
+        }
+        return messageVos;
+      } else {
+        return Collections.emptyList();
+      }
     }
+
+
   }
 
   @Override
   public List<MessageVO> getMessages(TopicPartition topicPartition, long offset, int count,
+                                     String textSearch,
                                      Deserializers deserializers) {
     final var records = highLevelConsumer.getLatestRecords(topicPartition, offset, count, deserializers);
-    if (records != null) {
-      final var messageVos = new ArrayList<MessageVO>();
-      for (var rec : records) {
-        final var messageVo = new MessageVO();
-        messageVo.setPartition(topicPartition.partition());
-        messageVo.setOffset(rec.offset());
-        messageVo.setKey(rec.key());
-        messageVo.setMessage(rec.value());
-        messageVo.setHeaders(headersToMap(rec.headers()));
-        messageVo.setTimestamp(new Date(rec.timestamp()));
-        messageVos.add(messageVo);
+    if (textSearch != null && !textSearch.isEmpty()) {
+      if (records != null) {
+        final var messageVos = new ArrayList<MessageVO>();
+        for (var rec : records) {
+          if (!rec.key().contains(textSearch) || !rec.value().contains(textSearch)) {
+            continue;
+          }
+          final var messageVo = new MessageVO();
+          messageVo.setPartition(topicPartition.partition());
+          messageVo.setOffset(rec.offset());
+          messageVo.setKey(rec.key());
+          messageVo.setMessage(rec.value());
+          messageVo.setHeaders(headersToMap(rec.headers()));
+          messageVo.setTimestamp(new Date(rec.timestamp()));
+          messageVos.add(messageVo);
+        }
+        return messageVos;
+      } else {
+        return Collections.emptyList();
       }
-      return messageVos;
     } else {
-      return Collections.emptyList();
+      if (records != null) {
+        final var messageVos = new ArrayList<MessageVO>();
+        for (var rec : records) {
+          final var messageVo = new MessageVO();
+          messageVo.setPartition(topicPartition.partition());
+          messageVo.setOffset(rec.offset());
+          messageVo.setKey(rec.key());
+          messageVo.setMessage(rec.value());
+          messageVo.setHeaders(headersToMap(rec.headers()));
+          messageVo.setTimestamp(new Date(rec.timestamp()));
+          messageVos.add(messageVo);
+        }
+        return messageVos;
+      } else {
+        return Collections.emptyList();
+      }
     }
   }
 

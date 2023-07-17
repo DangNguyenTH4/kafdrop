@@ -85,7 +85,10 @@ public final class MessageController {
    */
   @GetMapping("/topic/{name:.+}/allmessages")
   public String viewAllMessages(@PathVariable("name") String topicName,
-                                Model model, @RequestParam(name = "count", required = false) Integer count) {
+                                Model model,
+                                @RequestParam(name = "count", required = false) Integer count,
+                                @RequestParam(name = "textSearch", required = false) String textSearch
+                                ) {
     final int size = (count != null? count : 100);
     final MessageFormat defaultFormat = messageFormatProperties.getFormat();
     final MessageFormat defaultKeyFormat = keyFormatProperties.getFormat();
@@ -102,13 +105,13 @@ public final class MessageController {
           getDeserializer(topicName, defaultKeyFormat, "", "", protobufProperties.getParseAnyProto()),
           getDeserializer(topicName, defaultFormat, "", "", protobufProperties.getParseAnyProto()));
 
-    final List<MessageVO> messages = messageInspector.getMessages(topicName, size, deserializers);
+    final List<MessageVO> messages = messageInspector.getMessages(topicName, size, textSearch, deserializers);
 
     for (TopicPartitionVO partition : topic.getPartitions()) {
       messages.addAll(messageInspector.getMessages(topicName,
           partition.getId(),
           partition.getFirstOffset(),
-          size,
+          size, textSearch,
           deserializers));
     }
 
@@ -173,6 +176,7 @@ public final class MessageController {
                                                       messageForm.getPartition(),
                                                       messageForm.getOffset(),
                                                       messageForm.getCount().intValue(),
+                                                      messageForm.getTextSearch(),
                                                       deserializers));
 
     }
@@ -224,7 +228,8 @@ public final class MessageController {
       @RequestParam(name = "keyFormat", required = false) String keyFormat,
       @RequestParam(name = "descFile", required = false) String descFile,
       @RequestParam(name = "msgTypeName", required = false) String msgTypeName,
-      @RequestParam(name = "isAnyProto", required = false) Boolean isAnyProto
+      @RequestParam(name = "isAnyProto", required = false) Boolean isAnyProto,
+      @RequestParam(name = "textSearch", required = false) String textSearch
   ) {
     if (partition == null || offset == null || count == null) {
       final TopicVO topic = kafkaMonitor.getTopic(topicName)
@@ -246,6 +251,7 @@ public final class MessageController {
           partition,
           offset,
           count,
+          textSearch,
           deserializers);
 
       if (vos != null) {
@@ -304,6 +310,8 @@ public final class MessageController {
     @JsonProperty("firstOffset")
     private Long offset;
 
+    private String textSearch;
+
     /**
      * Need to clean this up. We're re-using this form for the JSON message API
      * and it's a bit confusing to have the Java variable and JSON field named
@@ -311,7 +319,7 @@ public final class MessageController {
      */
     @NotNull
     @Min(1)
-    @Max(100)
+//    @Max(100)
     @JsonProperty("lastOffset")
     private Long count;
 
@@ -359,6 +367,13 @@ public final class MessageController {
 
     public void setOffset(Long offset) {
       this.offset = offset;
+    }
+    public String getTextSearch() {
+      return textSearch;
+    }
+
+    public void setTextSearch(String textSearch) {
+      this.textSearch = textSearch;
     }
 
     public Long getCount() {
